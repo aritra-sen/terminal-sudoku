@@ -2,8 +2,13 @@
 #include <iostream>
 #include <unistd.h>
 #include <vector>
+#include <ncurses.h>
 
 #define N 3
+#define ROWS N*N
+#define COLS N*N
+#define HCELLS N
+#define VCELLS N
 
 struct Pair {
     short row,col;
@@ -17,7 +22,7 @@ struct Pair {
 };
 
 // Tells us if a cell insertion is valid.
-bool isValidEntry(short board[][N*N], short r, short c, short val);
+bool isValidEntry(short board[][COLS], short r, short c, short val);
 
 // Swap 2 Indexs in an array
 template<typename T>
@@ -28,48 +33,57 @@ template <typename T>
 void randomizeArray(T order[], short len);
 
 // Backtracking implementation to generate a random sudoku board.
-bool generateBoardImpl(short board[N*N][N*N], short r, short c);
+bool generateBoardImpl(short board[ROWS][COLS], short r, short c);
 
 // Helper Prshort function.
-void printBoard(short board[][N*N]);
+void printBoard(short board[][COLS]);
 
 // Generate a N*N sudoku board.
-void generateSudokuBoard(short board[][N*N]);
+void generateSudokuBoard(short board[][COLS]);
 
 // Check if given sudoku board has only 1 unique solution.
-bool isUniquelySolvable(short board[N*N][N*N], short r, short c);
+bool isUniquelySolvable(short board[ROWS][COLS], short r, short c);
 
 // Given a solved sudoku board, generate a solvable puzzle board.
-void generateSolvableBoard(short board[][N*N]);
+void generateSolvableBoard(short board[][COLS]);
+
+// Handles input from the user.
+void handleInput(short board[][COLS]);
 
 int main() {
-    short board[N*N][N*N];
-    for(short r=0;r<N*N;r++) {
-        for(short c=0;c<N*N;c++) {
+    initscr();
+
+    short board[ROWS][COLS];
+    for(short r=0;r<ROWS;r++) {
+        for(short c=0;c<COLS;c++) {
             board[r][c] = 0;
         }
     }
 
     generateSolvableBoard(board);
-    std::cout<<"Problem statement\n";
     printBoard(board);
+
+    handleInput(board);
+
+    endwin();
     return 0;
 }
 
 
-void generateSudokuBoard(short board[][N*N]) {
+void generateSudokuBoard(short board[][COLS]) {
     generateBoardImpl(board, 0, 0);
-    printBoard(board);
 }
 
 
-bool generateBoardImpl(short board[N*N][N*N], short r, short c) {
-    if(c == N*N) {
+bool generateBoardImpl(short board[ROWS][COLS], short r, short c) {
+    if(c == COLS) {
         return generateBoardImpl(board, r + 1, 0);
     }
-    if(r == N*N) {
+    if(r == ROWS) {
         return true;
     }
+
+    // Board has numbers from 1 - N*N.
     short order[N*N]; 
     for(short i = 0; i < N*N; i++) {
         order[i] = i + 1;
@@ -88,13 +102,13 @@ bool generateBoardImpl(short board[N*N][N*N], short r, short c) {
     return false;
 }
 
-bool isValidEntry(short board[][N*N], short r, short c, short val) {
-    for(short i = 0; i < N*N; i++) {
+bool isValidEntry(short board[][COLS], short r, short c, short val) {
+    for(short i = 0; i < COLS; i++) {
         if(board[r][i] == val) {
             return false;
         }
     }
-    for(short i = 0; i < N*N; i++) {
+    for(short i = 0; i < ROWS; i++) {
         if(board[i][c] == val) {
             return false;
         }
@@ -126,21 +140,44 @@ void randomizeArray(T order[], short len) {
     }
 }
 
-void printBoard(short board[][N*N]) {
-    for(short i = 0; i < N*N; i++) {
-        for(short j = 0; j < N*N; j++) {
-            if(board[i][j] == 0) {
-                std::cout<<"- ";                
-            } else {
-                std::cout<<board[i][j] << " ";
+void printBoard(short board[][COLS]) {
+    WINDOW *win = newwin(ROWS + VCELLS + 1, COLS + HCELLS + 1, 0,0);
+    refresh();
+    box(win, 0, 0);
+
+    for(short r = 1; r < VCELLS; r++) {
+        mvwaddch(win, r * (N+1), 0, ACS_LTEE);
+        for(short c = 1; c <= COLS + HCELLS - 1; c++) {
+            mvwaddch(win, r*(N+1), c, ACS_HLINE);
+        }
+        mvwaddch(win, r * (N+1), COLS + HCELLS, ACS_RTEE);
+    }
+
+    for(short c = 1; c < HCELLS; c++) {
+        mvwaddch(win, 0, c *(N+1), ACS_TTEE);
+        for(short r = 1; r <= ROWS + VCELLS - 1; r++) {
+            mvwaddch(win, r, c*(N+1), ACS_VLINE);
+        }
+        mvwaddch(win, ROWS + VCELLS, c *(N+1), ACS_BTEE);
+    }
+    for(short r = 1; r < VCELLS; r++) {
+        for(short c = 1; c < HCELLS; c++) {
+            mvwaddch(win, r*(N+1), c*(N+1), ACS_PLUS);
+        }
+    }
+
+
+    for(short i = 1; i <= ROWS; i++) {
+        for(short j = 1; j <= COLS; j++) {
+            if(board[i-1][j-1] != 0) {
+                mvwaddch(win, i + (i-1)/N,j + (j-1)/N,(char)('0' + board[i-1][j-1]));
             }
         }
-        std::cout<<std::endl;
     }
-    std::cout<<std::endl;
+    wrefresh(win);
 }
 
-bool isUniquelySolvable(short board[N*N][N*N], short r, short c) {
+bool isUniquelySolvable(short board[ROWS][COLS], short r, short c) {
     if(c == N*N) {
         return isUniquelySolvable(board, r + 1, 0);
     }
@@ -175,14 +212,14 @@ void generateSolvableBoard(short board[][N*N]) {
     srand (time(NULL) + 1000 * getpid()); 
 
     generateSudokuBoard(board);
-    Pair idxs[N*N*N*N];
+    Pair idxs[ROWS*COLS];
     short it = 0;
     for(short i = 0; i < N*N; i++) {
         for(short j = 0; j < N*N; j++) {
             idxs[it++] = Pair(i,j);
         }
     }
-    randomizeArray<Pair>(idxs, N*N*N*N);
+    randomizeArray<Pair>(idxs, ROWS*COLS);
     short count = 0;
     for(Pair idx : idxs) {
         short val = board[idx.row][idx.col];
@@ -197,4 +234,17 @@ void generateSolvableBoard(short board[][N*N]) {
             return;
         }
     }
+}
+
+void handleInput(short board[][COLS]) {
+    while(true) {
+    char ch = getch();
+    if(ch == 'X') {
+        break;
+    } else {
+        clear();
+        printBoard(board);
+        refresh();
+    }
+}
 }
