@@ -270,6 +270,7 @@ void handleInput(short board[][COLS]) {
                     printBoard(board);
                     break;
                 }
+            case KEY_DC:
             case KEY_BACKSPACE:
                 {
                     int idxR = curr.row - (curr.row/4) - 1, idxC = curr.col - (curr.col/4) - 1;
