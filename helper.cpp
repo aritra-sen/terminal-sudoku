@@ -21,6 +21,12 @@ struct Pair {
     Pair(short r, short c) : row(r), col(c) {};
 };
 
+// Current cursor position
+Pair curr = Pair(1,1);
+
+// Grid window
+WINDOW *win;
+
 // Tells us if a cell insertion is valid.
 bool isValidEntry(short board[][COLS], short r, short c, short val);
 
@@ -52,6 +58,7 @@ void handleInput(short board[][COLS]);
 
 int main() {
     initscr();
+    keypad(stdscr, TRUE);
 
     short board[ROWS][COLS];
     for(short r=0;r<ROWS;r++) {
@@ -141,7 +148,7 @@ void randomizeArray(T order[], short len) {
 }
 
 void printBoard(short board[][COLS]) {
-    WINDOW *win = newwin(ROWS + VCELLS + 1, COLS + HCELLS + 1, 0,0);
+    win = newwin(ROWS + VCELLS + 1, COLS + HCELLS + 1, 0,0);
     refresh();
     box(win, 0, 0);
 
@@ -170,10 +177,11 @@ void printBoard(short board[][COLS]) {
     for(short i = 1; i <= ROWS; i++) {
         for(short j = 1; j <= COLS; j++) {
             if(board[i-1][j-1] != 0) {
-                mvwaddch(win, i + (i-1)/N,j + (j-1)/N,(char)('0' + board[i-1][j-1]));
+                mvwaddch(win, i + (i-1)/N,j + (j-1)/N,(char)('0' + board[i-1][j-1]%10));
             }
         }
     }
+    wmove(win,curr.row,curr.col);
     wrefresh(win);
 }
 
@@ -237,14 +245,91 @@ void generateSolvableBoard(short board[][N*N]) {
 }
 
 void handleInput(short board[][COLS]) {
-    while(true) {
-    char ch = getch();
-    if(ch == 'X') {
-        break;
-    } else {
-        clear();
-        printBoard(board);
-        refresh();
+    bool gameOn = true;
+    while(gameOn) {
+        int ch = getch();
+        switch(ch) {
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                {
+                    int idxR = curr.row - (curr.row/4) - 1, idxC = curr.col - (curr.col/4) - 1;
+                    if(board[idxR][idxC] != 0 && board[idxR][idxC] < 10) {
+                        clear();
+                        printBoard(board);
+                        break;
+                    }
+                    board[idxR][idxC] = ch - '0' + 10;
+                    clear();
+                    printBoard(board);
+                    break;
+                }
+            case KEY_BACKSPACE:
+                {
+                    int idxR = curr.row - (curr.row/4) - 1, idxC = curr.col - (curr.col/4) - 1;
+                    if(board[idxR][idxC] != 0 && board[idxR][idxC] < 10) {
+                        clear();
+                        printBoard(board);
+                        break;
+                    }
+                    board[idxR][idxC] = 0;
+                    clear();
+                    printBoard(board);
+                    break;
+                }                
+            case KEY_UP:
+                if(curr.row > 1) {
+                    curr.row--;
+                    if(curr.row % 4 == 0 ) {
+                        curr.row--;
+                    }
+                }
+                clear();
+                printBoard(board);                
+                break;
+            case KEY_DOWN:
+                if(curr.row < ROWS + VCELLS - 1) {
+                    curr.row++;
+                    if(curr.row % 4 == 0 ) {
+                        curr.row++;
+                    }
+                }
+                clear();
+                printBoard(board);                
+                break;
+            case KEY_LEFT:
+                if(curr.col > 1) {
+                    curr.col--;
+                    if(curr.col % 4 == 0 ) {
+                        curr.col--;
+                    }
+                }
+                clear();
+                printBoard(board);                
+                break;
+            case KEY_RIGHT:
+                if(curr.col < COLS + HCELLS - 1) {
+                    curr.col++;
+                    if(curr.col % 4 == 0 ) {
+                        curr.col++;
+                    }
+                }
+                clear();
+                printBoard(board);                
+                break;
+            case 'X':
+                gameOn = false;
+                break;
+            default:
+                clear();
+                printBoard(board);
+                break;
+        }
     }
-}
 }
