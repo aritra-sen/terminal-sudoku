@@ -10,6 +10,12 @@
 #define HCELLS N
 #define VCELLS N
 
+#define DEFAULT_COLOR 1
+#define PREFILLED_COLOR 2
+#define WRONG_COLOR 3
+#define RIGHT_COLOR 4
+
+
 struct Pair {
     short row,col;
 
@@ -58,8 +64,17 @@ void handleInput(short board[][COLS]);
 
 int main() {
     initscr();
+    start_color();
     keypad(stdscr, TRUE);
 
+    init_color(COLOR_BLACK, 0, 0, 0);
+
+    init_pair(DEFAULT_COLOR, COLOR_WHITE, COLOR_BLACK);
+    init_pair(PREFILLED_COLOR, COLOR_BLUE, COLOR_BLACK);
+    init_pair(WRONG_COLOR, COLOR_WHITE, COLOR_RED);
+    init_pair(RIGHT_COLOR, COLOR_WHITE, COLOR_GREEN);
+
+    bkgd(COLOR_PAIR(DEFAULT_COLOR));
     short board[ROWS][COLS];
     for(short r=0;r<ROWS;r++) {
         for(short c=0;c<COLS;c++) {
@@ -111,12 +126,12 @@ bool generateBoardImpl(short board[ROWS][COLS], short r, short c) {
 
 bool isValidEntry(short board[][COLS], short r, short c, short val) {
     for(short i = 0; i < COLS; i++) {
-        if(board[r][i] == val) {
+        if(board[r][i]%10 == val) {
             return false;
         }
     }
     for(short i = 0; i < ROWS; i++) {
-        if(board[i][c] == val) {
+        if(board[i][c]%10 == val) {
             return false;
         }
     }
@@ -124,7 +139,7 @@ bool isValidEntry(short board[][COLS], short r, short c, short val) {
     short boxC = c / N;
     for(short i = boxR * N ; i < (boxR + 1) * N; i++) {
         for(short j = boxC * N; j < (boxC + 1) * N; j++) {
-            if(board[i][j] == val) {
+            if(board[i][j]%10 == val) {
                 return false;
             }
         }
@@ -151,6 +166,7 @@ void printBoard(short board[][COLS]) {
     win = newwin(ROWS + VCELLS + 1, COLS + HCELLS + 1, 0,0);
     refresh();
     box(win, 0, 0);
+    wbkgd(win, COLOR_PAIR(DEFAULT_COLOR));
 
     for(short r = 1; r < VCELLS; r++) {
         mvwaddch(win, r * (N+1), 0, ACS_LTEE);
@@ -177,7 +193,23 @@ void printBoard(short board[][COLS]) {
     for(short i = 1; i <= ROWS; i++) {
         for(short j = 1; j <= COLS; j++) {
             if(board[i-1][j-1] != 0) {
-                mvwaddch(win, i + (i-1)/N,j + (j-1)/N,(char)('0' + board[i-1][j-1]%10));
+                char digit = (char)('0' + board[i-1][j-1]%10);
+                if(board[i-1][j-1] < 10) {
+                    wattron(win, A_BOLD);
+                    wattron(win, COLOR_PAIR(PREFILLED_COLOR));
+                    mvwaddch(win, i + (i-1)/N,j + (j-1)/N, digit);
+                    wattroff(win, A_BOLD);
+                } else {
+                    int num = board[i-1][j-1];
+                    board[i-1][j-1] = 0;
+                    if(isValidEntry(board, i-1,j-1, num%10)) {
+                        wattron(win, COLOR_PAIR(RIGHT_COLOR));
+                    } else {
+                        wattron(win, COLOR_PAIR(WRONG_COLOR));
+                    }
+                    mvwaddch(win, i + (i-1)/N,j + (j-1)/N, digit);
+                    board[i-1][j-1] = num;
+                }
             }
         }
     }
