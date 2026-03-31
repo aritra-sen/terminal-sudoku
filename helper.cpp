@@ -304,6 +304,8 @@ void handleInput(short board[][COLS]) {
                 }
             case KEY_DC:
             case KEY_BACKSPACE:
+            case '\b':   // ASCII 8: Ctrl+H / some terminals' backspace
+            case 127:    // ASCII 127 (DEL): macOS terminals send this for Backspace key
                 {
                     int idxR = curr.row - (curr.row/4) - 1, idxC = curr.col - (curr.col/4) - 1;
                     if(board[idxR][idxC] != 0 && board[idxR][idxC] < 10) {
