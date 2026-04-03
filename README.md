@@ -29,7 +29,8 @@ sudo apt install libncurses-dev
 ```bash
 make        # build
 make run    # build and run
-make clean  # remove binary and object files
+make test   # build and run unit tests (no ncurses required)
+make clean  # remove binary, object files, and test binary
 ```
 
 ## Controls
@@ -52,6 +53,11 @@ src/
     game_logic.h/cpp    # Sudoku rules, board generation, solver
   tui/
     tui.h/cpp           # ncurses rendering
+tests/
+  doctest.h             # Single-header test framework (doctest v2.4.11)
+  test_game_logic.cpp   # Tests for board generation, validation, solver
+  test_engine_logic.cpp # Tests for cursor math and board state transitions
+  test_main_constants.cpp # Static assertions for encoding constants
 ```
 
 ## How It Works

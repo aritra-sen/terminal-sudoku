@@ -10,7 +10,15 @@ SRCS = src/main.cpp \
 
 OBJS = $(SRCS:.cpp=.o)
 
-.PHONY: all clean run
+TEST_TARGET  = tests/run_tests
+TEST_SRCS    = tests/test_game_logic.cpp \
+               tests/test_engine_logic.cpp \
+               tests/test_main_constants.cpp \
+               src/game_logic/game_logic.cpp \
+               src/engine/engine.cpp
+TEST_CXXFLAGS = -Isrc/engine -Isrc/game_logic -Itests -DTEST_BUILD
+
+.PHONY: all clean run test
 
 all: $(TARGET)
 
@@ -23,5 +31,11 @@ $(TARGET): $(OBJS)
 run: $(TARGET)
 	./$(TARGET)
 
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_SRCS)
+	$(CXX) $(TEST_CXXFLAGS) $(TEST_SRCS) -o $(TEST_TARGET)
+
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS) $(TEST_TARGET)
